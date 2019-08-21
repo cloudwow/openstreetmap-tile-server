@@ -31,13 +31,6 @@ if [ "$1" = "import" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
 
-    # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data.osm.pbf ]; then
-        echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
-        wget -nv http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf -O /data.osm.pbf
-        wget -nv http://download.geofabrik.de/europe/luxembourg.poly -O /data.poly
-    fi
-
     # determine and set osmosis_replication_timestamp (for consecutive updates)
     osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
     osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
@@ -51,8 +44,18 @@ if [ "$1" = "import" ]; then
         sudo -u renderer cp /data.poly /var/lib/mod_tile/data.poly
     fi
 
-    # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
+    file_index=0
+
+    for data_file in /import_data/*
+    do
+	if [ $file_index -eq 0 ]
+	then
+	    sudo -u renderer osm2pgsql -d gis --create --slim --cache 4096  -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua  --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style ${data_file}
+	else
+	    sudo -u renderer osm2pgsql -d gis --append --slim --cache 4096 -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua  --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style ${data_file}
+	fi
+	file_index=1
+    done
 
     # Create indexes
     sudo -u postgres psql -d gis -f indexes.sql
@@ -61,6 +64,23 @@ if [ "$1" = "import" ]; then
 
     exit 0
 fi
+if [ "$1" = "import_more" ]; then
+    # Initialize PostgreSQL
+    CreatePostgressqlConfig
+    service postgresql start
+    # Import data
+    for data_file in /import_data/*
+    do
+      sudo -u renderer osm2pgsql -d gis --append --slim -cache 2048 -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua  --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style ${data_file}
+    done
+    # Recreate indexes
+    sudo -u postgres psql -d gis -f indexes.sql
+
+    service postgresql stop
+
+    exit 0
+fi
+
 
 if [ "$1" = "run" ]; then
     # Clean /tmp

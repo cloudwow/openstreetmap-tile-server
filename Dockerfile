@@ -107,7 +107,8 @@ USER renderer
 
 # Configure stylesheet
 WORKDIR /home/renderer/src
-RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git
+RUN ls -l
+RUN git clone https://github.com/cloudwow/openstreetmap-carto.git
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
 RUN npm install -g carto
@@ -161,6 +162,7 @@ RUN cd ~/src \
 USER root
 COPY run.sh /
 COPY indexes.sql /
+COPY drop_indexes.sql /
 ENTRYPOINT ["/run.sh"]
 CMD []
 
