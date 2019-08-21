@@ -1,0 +1,13 @@
+DROP INDEX planet_osm_roads_admin;
+DROP INDEX planet_osm_roads_roads_ref;
+DROP INDEX planet_osm_roads_admin_low;
+DROP INDEX planet_osm_line_ferry;
+DROP INDEX planet_osm_line_river;
+DROP INDEX planet_osm_line_name;
+DROP INDEX planet_osm_polygon_water;
+DROP INDEX planet_osm_polygon_nobuilding;
+DROP INDEX planet_osm_polygon_name;
+DROP INDEX planet_osm_polygon_way_area_z10;
+DROP INDEX planet_osm_polygon_military;
+DROP INDEX planet_osm_polygon_way_area_z6;
+DROP INDEX planet_osm_point_place;
