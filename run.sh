@@ -31,18 +31,7 @@ if [ "$1" = "import" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
 
-    # determine and set osmosis_replication_timestamp (for consecutive updates)
-    osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
-    osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
-    REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
-    # initial setup of osmosis workspace (for consecutive updates)
-    sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
-
-    # copy polygon file if available
-    if [ -f /data.poly ]; then
-        sudo -u renderer cp /data.poly /var/lib/mod_tile/data.poly
-    fi
 
     file_index=0
 
@@ -109,5 +98,8 @@ if [ "$1" = "run" ]; then
     exit 0
 fi
 
+if [ "$1" = "derp" ]; then
+    exit 0
+fi
 echo "invalid command"
 exit 1
