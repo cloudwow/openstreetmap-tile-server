@@ -107,8 +107,8 @@ USER renderer
 
 # Configure stylesheet
 WORKDIR /home/renderer/src
-RUN ls -l
-RUN git clone https://github.com/cloudwow/openstreetmap-carto.git
+RUN ls 
+RUN git clone  https://github.com/cloudwow/openstreetmap-carto.git
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
 RUN npm install -g carto
@@ -157,9 +157,16 @@ USER renderer
 RUN cd ~/src \
     && git clone https://github.com/zverik/regional \
     && chmod u+x ~/src/regional/trim_osc.py
-
 # Start running
 USER root
+RUN apt-get update
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN apt-get install -y python3-pip
+RUN apt-get install -y emacs
+COPY query.py /
+copy python_requirements.txt
+pip install -r python_requirements.txt
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 COPY run.sh /
 COPY indexes.sql /
 COPY drop_indexes.sql /
